@@ -1,8 +1,8 @@
 import "bootstrap/dist/css/bootstrap.min.css";
-import React, { useEffect, useReducer, useState } from 'react';
-import { addTask, deleteTask, getTasks, updateTask } from './api/api';
-import AddTask from './components/AddTask';
-import SelectedContext from './components/SelectedContext';
+import React, { useEffect, /*useReducer,*/ useState } from 'react';
+import { addTask, deleteTask, getTasks, updateTask } from '../api/api';
+import TaskForm from './TaskForm';
+import SelectedContext from './SelectedContext';
 
 const App: React.FC = () => {
 
@@ -10,7 +10,7 @@ const App: React.FC = () => {
   const [activeIndex, setActive] = useState(-1);
   const [selectedTask, setSelectedTask] = useState({} as ITask);
 
-  useEffect(() => { fetchTasks() }, []);
+  useEffect(() => { fetchTasks(); }, []);
 
   const fetchTasks = async (): Promise<void> => {
     try {
@@ -21,30 +21,31 @@ const App: React.FC = () => {
     }
   }
 
-  const handleSaveTask = (formData: ITask): void => {
-    if (formData) {  
-      if (formData.id === undefined || formData.id < 1) {
-        addTask(formData)
+  const resetStates = (): void => {
+    setTasks(tasks);
+    setActive(-1);
+    fetchTasks();
+    setSelectedTask({} as ITask);
+  }
+
+  const handleSaveTask = (taskData: ITask): void => {
+    if (taskData !== undefined) {
+      if (taskData.id === undefined || taskData.id < 1) {
+        addTask(taskData)
           .then(({ status, data }) => {
             if (status !== 200) {
-              throw new Error('Error! Task not saved')
+              throw new Error('The task could not be saved')
             }
-            setTasks(tasks);
-            setActive(-1);
-            fetchTasks();
-            setSelectedTask({} as ITask);
+            resetStates();
           })
           .catch((err) => console.log(err));
       } else {
-        updateTask(formData)
+        updateTask(taskData)
           .then(({ status, data }) => {
             if (status !== 200) {
-              throw new Error('Error! Task not saved')
+              throw new Error('The task could not be saved')
             }
-            setTasks(tasks);
-            setActive(-1);
-            fetchTasks();
-            setSelectedTask({} as ITask);
+            resetStates();
           })
           .catch((err) => console.log(err));
       }
@@ -52,40 +53,19 @@ const App: React.FC = () => {
   }
 
   const handleDeleteTask = (selectedTask: ITask): void => {
-    deleteTask(selectedTask.id)
-      .then(({ status, data }) => {
-        if (status !== 200) {
-          throw new Error('Error! Task not deleted')
-        }
-        setTasks(tasks);
-        setActive(-1);
-        fetchTasks();
-        setSelectedTask({} as ITask);
-      })
-      .catch((err) => console.log(err));
-  }
-
-  const handleUpdateTask = (selectedTask: ITask, newText: string): void => {
-    const newTasks = tasks.map(task => {
-      if (task === selectedTask) {
-        return {
-          ...task,
-          text: newText,
-        };
-      }
-      return task;
-    });
-
-    selectedTask.text = newText;
-    updateTask(selectedTask)
-      .then(({ status, data }) => {
-        if (status !== 200) {
-          throw new Error('Error! Task not updated')
-        }
-      })
-      .catch((err) => console.log(err));
-
-    setTasks(newTasks);
+    if (activeIndex < 0) {
+      deleteTask(selectedTask.id)
+        .then(({ status, data }) => {
+          if (status !== 200) {
+            throw new Error('The task could not be deleted')
+          }
+          setTasks(tasks);
+          setActive(-1);
+          fetchTasks();
+          setSelectedTask({} as ITask);
+        })
+        .catch((err) => console.log(err));
+    }
   }
 
   const toggleDone = (selectedTask: ITask): void => {
@@ -122,13 +102,15 @@ const App: React.FC = () => {
         <div className="navbar-nav mr-auto">
         </div>
       </nav>
-
-      <div className="container mt-3">
-        <div className="list row">
-          <div className="col-md-6">
-            <ul className="list-group">
-              {/* tasks && */ 
-                tasks.map((task, index) => (
+      <div className="col-sm-0 offset-md-1 offset-lg-2 offset-xl-2">
+        <div className="container mt-3">
+          <div className="row">
+            <div className="col-xs-12 col-sm-12 col-md-10 col-lg-8 col-xl-6"><h4>To-do list</h4></div>
+          </div>
+          <div className="list row">
+            <div className="col-xs-12  col-sm-12 col-md-10 col-lg-8 col-xl-6">
+              <ul className="list-group">
+                {tasks.map((task, index) => (
                   <li
                     className={
                       "list-group-item " +
@@ -137,7 +119,7 @@ const App: React.FC = () => {
                     key={index}
                   ><div className="form-check">
                       <div className="row">
-                        <div className="col-md-8">
+                        <div className="col-8">
                           <label className={task.done ? "done form-check-label" : "form-check-label"} style={{ textDecoration: task.done ? 'line-through' : undefined }}>
                             <input
                               type="checkbox"
@@ -148,25 +130,26 @@ const App: React.FC = () => {
                             {task.text}
                           </label>
                         </div>
-                        <div className="col-md-2">
-                          <a href="#" onClick={() => handleDeleteTask(task)}>Delete</a>
+                        <div className="col-2">
+                          <button type="button" onClick={() => handleDeleteTask(task)} className="btn btn-link p-0">Delete</button>
                         </div>
-                        <div className="col-md-2">
-                          <a href="#" onClick={() => {setSelectedTask({ ...task});}}>Edit</a>
+                        <div className="col-2">
+                          <button type="button" onClick={() => { setSelectedTask({ ...task }); setActive(index); }} className="btn btn-link p-0">Edit</button>
                         </div>
                       </div>
                     </div>
                   </li>
                 ))}
-            </ul>
+              </ul>
+            </div>
           </div>
-        </div>
-        <div className="row mt-3"></div>
-        <div className="list row">
-          <div className="col-md-6 pt-8">
-            <SelectedContext.Provider value={selectedTask}>
-              <AddTask saveTask={handleSaveTask} />
-            </SelectedContext.Provider>
+          <div className="row mt-3"></div>
+          <div className="list row">
+            <div className="col-md-6 pt-8">
+              <SelectedContext.Provider value={selectedTask}>
+                <TaskForm saveTask={handleSaveTask} setActive={setActive} />
+              </SelectedContext.Provider>
+            </div>
           </div>
         </div>
       </div>

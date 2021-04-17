@@ -1,6 +1,6 @@
-import axios, { AxiosResponse } from 'axios'
+import axios from 'axios'
 
-const baseUrl: string = 'http://localhost:8181/api'
+const baseUrl = process.env.REACT_APP_API_URL;
 
 export const getTasks = async () => {
   try {
@@ -33,9 +33,9 @@ export const addTask = async (formData: ITask) => {
 
 export const updateTask = async (taskUpdate: ITask) => {
   try {
-    //const taskUpdate: Omit<ITask, 'id' | 'order' | 'done' | 'fol_id'> = {
-    //  text: task.text
-    //};
+    /*const taskUpdate: Omit<ITask, 'id' | 'order' | 'done' | 'fol_id'> = {
+      text: task.text
+    };*/
     const updatedTask = await axios.put(
       `${baseUrl}/tasks/${taskUpdate.id}/edit`,
       taskUpdate
@@ -45,22 +45,7 @@ export const updateTask = async (taskUpdate: ITask) => {
     throw new Error(error)
   }
 }
-/*
-export const updateTaskDone = async (task: ITask) => {
-  try {
-    const taskUpdate: Pick<ITask, 'done'> = {
-      done: true
-    };
-    const updatedTask = await axios.put(
-      `${baseUrl}/${task.id}/edit`,
-      taskUpdate
-    )
-    return updatedTask;
-  } catch (error) {
-    throw new Error(error)
-  }
-}
-*/
+
 export const deleteTask = async (id: number) => {
   try {
     const deletedTask = await axios.delete(

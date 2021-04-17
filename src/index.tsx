@@ -1,12 +1,11 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-//import './index.css'
-import App from './App'
+import TasksList from './components/TasksList'
 //import reportWebVitals from './reportWebVitals';
 
 ReactDOM.render(
     <React.StrictMode>
-        <App />
+        <TasksList />
     </React.StrictMode>,
     document.getElementById('root'),
 );
